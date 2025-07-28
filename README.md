@@ -24,8 +24,8 @@ To create a process that:
   * `tblChildJobcodes`
   * `tblTSheetsLocations`
 * ✅ Able to perform `GET` and `POST` requests using Postman
-* ✅ Test data successfully posted to TSheets for validation
-* ✅ Verified the test data appears correctly in the TSheets UI
+* ❌ Test data successfully posted to TSheets for validation
+* ❌ Verified the test data appears correctly in the TSheets UI
 
 ---
 
