@@ -32,18 +32,21 @@ To create a process that:
 ## 🔄 Immediate Next Steps
 
 1. **Populate local tables**
-   Use Postman `GET` requests to pull all current TSheets data (jobcodes and locations) and insert it into the three SQL tables.
+  ✅ Use Postman `GET` requests to pull all current TSheets data (jobcodes) and insert it into the two SQL tables.
 
-2. **Field mapping verification**
+2. **Populate location tables**
+   Use Postman `GET` to pull all the location data, create a separate .py since the data is a bit more complex.
+
+3. **Field mapping verification**
    Ensure each field is inserted correctly in the database so we know where to map the data when posting back to TSheets.
 
-3. **Validate with test `POST`**
+4. **Validate with test `POST`**
    Do another test `POST` using full data to confirm the logic works and TSheets accepts the structure.
 
-4. **Review RM API**
+5. **Review RM API**
    Ensure we’re pulling the correct fields from RM and aligning them with TSheets structure.
 
-5. **Duplicate check logic**
+6. **Duplicate check logic**
    Before posting new jobs to TSheets, verify they don't already exist (based on job name or number).
 
 ---
