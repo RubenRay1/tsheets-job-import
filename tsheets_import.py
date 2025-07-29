@@ -1,7 +1,7 @@
 import requests
 import time
 
-ACCESS_TOKEN = 'your_companys_tsheets_access_token_here'  # Replace with your actual token
+ACCESS_TOKEN = 'access_token'  # Replace with your actual token
 
 # 🔧 Test job data (manually hardcoded)
 def get_test_jobs():
