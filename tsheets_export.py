@@ -14,11 +14,18 @@ conn = pyodbc.connect(
 )
 cursor = conn.cursor()
 
-# Pagination loop
+
+cursor.execute("SELECT id FROM tblParentJobcodes")
+existing_parents = {row[0] for row in cursor.fetchall()}
+
+cursor.execute("SELECT id FROM tblChildJobcodes")
+existing_children = {row[0] for row in cursor.fetchall()}
+
+# Pull every page of jobcodes
 all_jobcodes = {}
 all_locations = {}
-
 page = 1
+
 while True:
     response = requests.get(f"{BASE_URL}?per_page=500&page={page}", headers=HEADERS)
     data = response.json()
@@ -33,49 +40,57 @@ while True:
     # Break if this was the last page
     if not data.get('more', False):
         break
-
     page += 1
 
+
 # My logic to insert into SQL Server
-
+# Insert only brand-new children
 parent_inserted = 0
-child_inserted = 0
-# location_inserted = 0
 
 for jc in all_jobcodes.values():
-    if jc['parent_id'] == 0:
+    if jc['parent_id'] == 0 and jc['id'] not in existing_parents:
         location_id = jc['locations'][0] if jc.get('locations') else None
-        cursor.execute("""
-            IF NOT EXISTS (SELECT 1 FROM tblParentJobcodes WHERE id = ?)
-            INSERT INTO tblParentJobcodes (id, name, active, type, created, hasChildren, locationId)
+        cursor.execute(
+            """
+            INSERT INTO tblParentJobcodes
+              (id, name, active, type, created, hasChildren, locationId)
             VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, jc['id'], jc['id'], jc['name'], int(jc['active']), jc['type'], jc['created'], int(jc['has_children']), location_id)
-        if cursor.rowcount > 0:
-            parent_inserted += 1
+            """,
+            jc['id'],
+            jc['name'],
+            int(jc['active']),
+            jc['type'],
+            jc['created'],
+            int(jc['has_children']),
+            location_id
+        )
+        parent_inserted += 1
+
+# Insert only brand-new children
+child_inserted = 0
 
 for jc in all_jobcodes.values():
-    if jc['parent_id'] != 0:
+    if jc['parent_id'] != 0 and jc['id'] not in existing_children:
         location_id = jc['locations'][0] if jc.get('locations') else None
-        cursor.execute("""
-            IF NOT EXISTS (SELECT 1 FROM tblChildJobcodes WHERE id = ?)
-            INSERT INTO tblChildJobcodes (id, name, parentId, assignedToAll, locationId, created)
+        cursor.execute(
+            """
+            INSERT INTO tblChildJobcodes
+              (id, name, parentId, assignedToAll, locationId, created)
             VALUES (?, ?, ?, ?, ?, ?)
-        """, jc['id'], jc['id'], jc['name'], jc['parent_id'], int(jc['assigned_to_all']), location_id, jc['created'])
-        if cursor.rowcount > 0:
-            child_inserted += 1
+            """,
+            jc['id'],
+            jc['name'],
+            jc['parent_id'],
+            int(jc['assigned_to_all']),
+            location_id,
+            jc['created']
+        )
+        child_inserted += 1
 
-# for loc in all_locations.values():
-#     cursor.execute("""
-#         IF NOT EXISTS (SELECT 1 FROM tblTSheetsLocation WHERE id = ?)
-#         INSERT INTO tblTSheetsLocation (id, addr1, addr2, city, state, zip, label)
-#         VALUES (?, ?, ?, ?, ?, ?, ?)
-#     """, loc['id'], loc['id'], loc['addr1'], loc['addr2'], loc['city'], loc['state'], loc['zip'], loc['label'])
-#     if cursor.rowcount > 0:
-#         location_inserted += 1
 
 conn.commit()
 conn.close()
 
 print(f"Inserted into tblParentJobcodes: {parent_inserted}")
 print(f"Inserted into tblChildJobcodes: {child_inserted}")
-# print(f"Inserted into tblTSheetsLocation: {location_inserted}")
+
