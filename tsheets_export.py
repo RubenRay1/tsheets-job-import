@@ -23,19 +23,14 @@ existing_children = {row[0] for row in cursor.fetchall()}
 
 # Pull every page of jobcodes
 all_jobcodes = {}
-all_locations = {}
 page = 1
 
 while True:
-    response = requests.get(f"{BASE_URL}?per_page=500&page={page}", headers=HEADERS)
+    response = requests.get(f"{BASE_URL}?per_page=200&page={page}", headers=HEADERS)
     data = response.json()
 
     jobcodes = data['results']['jobcodes']
     all_jobcodes.update(jobcodes)
-
-    # Save supplemental data (locations) only on the first page
-    if page == 1:
-        all_locations = data.get('supplemental_data', {}).get('locations', {})
 
     # Break if this was the last page
     if not data.get('more', False):
@@ -56,13 +51,7 @@ for jc in all_jobcodes.values():
               (id, name, active, type, created, hasChildren, locationId)
             VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
-            jc['id'],
-            jc['name'],
-            int(jc['active']),
-            jc['type'],
-            jc['created'],
-            int(jc['has_children']),
-            location_id
+            jc['id'], jc['name'], int(jc['active']), jc['type'], jc['created'], int(jc['has_children']), location_id
         )
         parent_inserted += 1
 
@@ -78,12 +67,7 @@ for jc in all_jobcodes.values():
               (id, name, parentId, assignedToAll, locationId, created)
             VALUES (?, ?, ?, ?, ?, ?)
             """,
-            jc['id'],
-            jc['name'],
-            jc['parent_id'],
-            int(jc['assigned_to_all']),
-            location_id,
-            jc['created']
+            jc['id'], jc['name'], jc['parent_id'], int(jc['assigned_to_all']), location_id, jc['created']
         )
         child_inserted += 1
 
