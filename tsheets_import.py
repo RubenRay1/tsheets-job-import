@@ -6,7 +6,7 @@ import pyodbc
 #from email.message import EmailMessage
 from requests.adapters import HTTPAdapter, Retry
 
-ACCESS_TOKEN = "S.3__669676ad7bd8c66c3836c967d5a63f7ae30f34e6" # Test Token "S.26__5e017cd47d32a05252da2114e9ba3ca07b5c1e3d"
+ACCESS_TOKEN = "S.3__669676ad7bd8c66c3836c967d5a63f7ae30f34e6" # Test Environment Token "S.27__99f8d728ba2d107c9ec14442fe4b54ac728a0151"
 JOBCODES_URL = "https://rest.tsheets.com/api/v1/jobcodes"
 LOCATIONS_URL = "https://rest.tsheets.com/api/v1/locations"
 
@@ -41,7 +41,6 @@ def post_with_retry(url, payload, max_retries=5, base_sleep=3):
             if attempt == max_retries:
                 raise
             wait = base_sleep * attempt
-            #print(f"Connection error on attempt {attempt}: {e}. Retrying in {wait} seconds...")
             time.sleep(wait)
 
 
@@ -70,16 +69,17 @@ def get_jobs_from_sql_server():
     )
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT TOP 5 jobId, jobName, jobJobId,
+        SELECT jobId, jobName, jobJobId,
                jobAddress1, jobAddress2, jobCity, jobStateCd, jobZip, JobFullAddress
         FROM BMS.dbo.tblRMJobDetail
-        WHERE siteId = 33
+        WHERE siteId = 8
             AND jobId IS NOT NULL
             AND jobName IS NOT NULL
             AND jobJobId IS NOT NULL
+            AND jobjobId != 'LAX-UNALLOCATED JC'
             AND jobStatus = 'Active'
             AND jobProgress IS NOT NULL
-            AND jobProgress NOT IN ('Lost Lead', 'Paid in Full = File Closed')       
+            AND jobProgress NOT IN ('Lost Lead', 'Paid in Full - File Closed')       
         ORDER BY jobId ASC
     """)
     jobs = [{
@@ -126,8 +126,7 @@ def get_existing_parent_jobcodes():
         else:
             break
     
-    print(len(names))
-    print(names)
+    return names
 
 
 # Extract jobcode ID from JSON response
@@ -192,24 +191,15 @@ def create_parent_jobcodes(jobs, existing_job_names, also_create_location=True):
                 if l_resp.status_code == 200:
                     loc_created += 1
                     print(f"Location created + linked for: {job_name}")
-                # else:
-                #     print(f"Location create/link failed: {l_resp.status_code} - {l_resp.text[:300]}")
+
 
         elif jc_resp.status_code == 429:
-            #print(f"Rate limited on: {job_name} → waiting 5s…")
             time.sleep(5)
             retry = post_with_retry(JOBCODES_URL, jc_payload)
             if retry.status_code == 200:
                 created_count += 1
                 jobcode_id = extract_jobcode_id(retry.json())
-        #         print(f"Retry successful for: {job_name} (id={jobcode_id})")
-        #     else:
-        #         print(f"Retry failed: {retry.status_code} - {retry.text[:300]}")
-        # else:
-        #     print(f"Failed to create jobcode: {job_name}")
-        #     print(f"Status {jc_resp.status_code}: {jc_resp.text[:300]}")
 
-        # Delay to prevent hitting API limits
         if created_count and created_count % 25 == 0:
             time.sleep(2)
         else:
@@ -217,32 +207,15 @@ def create_parent_jobcodes(jobs, existing_job_names, also_create_location=True):
 
     print(f"\n Total jobcodes created: {created_count} | Locations created+linked: {loc_created}")
 
-# Send email notification on failure
-# def send_failure_email():
-#     msg = EmailMessage()
-#     msg["Subject"] = "TSheets Job Import Failed"
-#     msg["From"] = "youremail@example.com"
-#     msg["To"] = "youremail@example.com"  # or your team distribution list
-#     msg.set_content("The TSheets job import script failed after 3 attempts.")
-
-#     try:
-#         with smtplib.SMTP("smtp.yourcompany.com", 587) as server:
-#             server.starttls()
-#             server.login("youremail@example.com", "yourpassword")
-#             server.send_message(msg)
-#             print("Failure notification email sent.")
-#     except Exception as e:
-#         print(f"Failed to send failure email: {e}")
-
 
 def main():
     start = time.time()
     jobs = get_jobs_from_sql_server()
     print(f"SQL fetched completed in {time.time() - start:.2f} seconds.")
     existing_job_names = get_existing_parent_jobcodes()
+    print(f"Existing parent jobcodes fetched: {existing_job_names}")
     print(f"TSheets jobcode fetch took {time.time() - start:.2f} seconds total.")
-    #print(f"Existing job names found: {len(existing_job_names)}")
-    #create_parent_jobcodes(jobs, existing_job_names, also_create_location=True)
+    create_parent_jobcodes(jobs, existing_job_names, also_create_location=True)
 
 
 if __name__ == "__main__":

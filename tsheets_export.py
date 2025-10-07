@@ -64,10 +64,10 @@ for jc in all_jobcodes.values():
         cursor.execute(
             """
             INSERT INTO tblChildJobcodes
-              (id, name, parentId, assignedToAll, locationId, created)
-            VALUES (?, ?, ?, ?, ?, ?)
+              (id, name, active, parentId, assignedToAll, locationId, created)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
-            jc['id'], jc['name'], jc['parent_id'], int(jc['assigned_to_all']), location_id, jc['created']
+            jc['id'], jc['name'], int(jc['active']), jc['parent_id'], int(jc['assigned_to_all']), location_id, jc['created']
         )
         child_inserted += 1
 
