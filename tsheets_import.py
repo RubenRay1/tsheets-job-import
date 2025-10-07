@@ -6,7 +6,7 @@ import pyodbc
 #from email.message import EmailMessage
 from requests.adapters import HTTPAdapter, Retry
 
-ACCESS_TOKEN = "S.3__669676ad7bd8c66c3836c967d5a63f7ae30f34e6" # Test Environment Token "S.27__99f8d728ba2d107c9ec14442fe4b54ac728a0151"
+ACCESS_TOKEN = "SECRET"
 JOBCODES_URL = "https://rest.tsheets.com/api/v1/jobcodes"
 LOCATIONS_URL = "https://rest.tsheets.com/api/v1/locations"
 
