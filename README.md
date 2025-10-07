@@ -99,12 +99,10 @@ To create a process that:
 
 ## 🧾 Example Output (Console)
 
-flowchart TD
-    A[Registration Manager (RM)] --> B[SQL Server]
-    B --> C[Python Scripts]
-    C --> D[TSheets API]
-    D --> E[QuickBooks Time Portal]
-    E --> F[End Users (Project Managers, Field Crews)]
+Jobcode BMS-25-00008M (ID 176896742) is linked to location 108246942
+TSheets -> addr1: 5720 Shoreline Cir W, city: Fort Worth, state: TX, zip: 76119
+SQL -> addr1: 5720 Shoreline Cir W, city: Fort Worth, state: TX, zip: 76119
+-> No address change for BMS-25-00008M, skipping.
 ---
 
 ## 📦 Repository Contents
