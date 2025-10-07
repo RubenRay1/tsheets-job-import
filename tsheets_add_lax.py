@@ -2,7 +2,7 @@ import requests
 import time
 import pyodbc
 
-ACCESS_TOKEN = "S.3__669676ad7bd8c66c3836c967d5a63f7ae30f34e6"  # Prod token
+ACCESS_TOKEN = "SECRET"
 HEADERS = {
     "Authorization": f"Bearer {ACCESS_TOKEN}",
     "Content-Type": "application/json",
