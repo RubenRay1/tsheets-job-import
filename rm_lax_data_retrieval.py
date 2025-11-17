@@ -22,7 +22,6 @@ rundate = "2024-01-01T00:00:00Z"
 userpass = "{username: '"+ UN +"', password: '"+ PW +"'}"
 userpass64 = base64.b64encode(userpass.encode("ascii")).decode("ascii")
 
-# AUTHENTICATION
 # sends POST request to loginURL with base64 credentials in header
 # gets back token to be used for subsequent request headers along with the API Secret
 loginResponse = requests.post(url=loginURL, headers={"Authorization": "Basic %s" % userpass64})
