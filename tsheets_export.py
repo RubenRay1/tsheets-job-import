@@ -1,7 +1,7 @@
 import requests
 import pyodbc
 
-ACCESS_TOKEN = 'S.3__669676ad7bd8c66c3836c967d5a63f7ae30f34e6'
+ACCESS_TOKEN = 'SECRET'
 BASE_URL = 'https://rest.tsheets.com/api/v1/jobcodes'
 HEADERS = {'Authorization': f'Bearer {ACCESS_TOKEN}'}
 

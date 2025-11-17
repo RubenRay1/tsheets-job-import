@@ -1,6 +1,7 @@
 # TSheets Job Import
 
-This project is a blueprint for automating the import of job data from **Registration Manager (RM)** into [TSheets](https://www.tsheets.com/) using the TSheets REST API.
+This project automates the synchronization of job data between **Registration Manager (RM)** and [QuickBooks Time (TSheets)](https://www.tsheets.com/) using the **TSheets REST API**.  
+It replaces manual job creation with a fully automated, API-driven workflow that ensures all active jobs in RM are accurately reflected in TSheets.
 
 ---
 
@@ -10,64 +11,128 @@ To create a process that:
 
 * Extracts job information from RM (Job Name, Job Number, Address)
 * Inserts the data into a local SQL Server database
-* Posts jobs into TSheets using the API
+* Compares existing jobcodes between RM and TSheets to prevent duplicates
+* Posts and updates jobs in TSheets using the API
 * Automates the sync using a scheduled task on a server
 
 ---
 
 ## 📌 Current Status
 
-* ✅ CSV method **deprecated** — moved to a direct API approach
-* ✅ SQL Server tables created:
-
+* ✅ CSV method **deprecated** — transitioned to a direct REST API integration  
+* ✅ SQL Server tables created and in production:
   * `tblParentJobcodes`
   * `tblChildJobcodes`
   * `tblTSheetsLocations`
-* ✅ Able to perform `GET` and `POST` requests using Postman
-* ❌ Test data successfully posted to TSheets for validation
-* ❌ Verified the test data appears correctly in the TSheets UI
+* ✅ API authentication and bearer token access fully implemented  
+* ✅ `GET`, `POST`, and `PUT` requests functional through Python and Postman  
+* ✅ End-to-end sync tested successfully between RM → SQL → TSheets  
+* ✅ Duplicate detection and error-handling implemented  
+* ✅ Automated location linking verified and stable  
+* ✅ Retry logic and rate-limit handling fully operational  
+* ✅ Project is live in production under BMS CAT IT automation  
 
 ---
 
-## 🔄 Immediate Next Steps
+## 🔄 Process Overview
 
-1. **Populate local tables**
-  ✅ Use Postman `GET` requests to pull all current TSheets data (jobcodes) and insert it into the two SQL tables.
+1. **Data Extraction from RM**  
+   Job details (Name, Job Number, Address, Status) are pulled from the RM system.  
 
-2. **Populate location tables**
-   Use Postman `GET` to pull all the location data, create a separate .py since the data is a bit more complex.
+2. **SQL Data Handling**  
+   Data is stored in SQL Server tables (`tblParentJobcodes`, `tblChildJobcodes`, `tblTSheetsLocations`) for reference and validation.
 
-3. **Field mapping verification**
-   Ensure each field is inserted correctly in the database so we know where to map the data when posting back to TSheets.
+3. **TSheets Comparison**  
+   Active TSheets jobcodes are retrieved via API and compared against RM data to ensure only new or updated jobs are posted.
 
-4. **Validate with test `POST`**
-   Do another test `POST` using full data to confirm the logic works and TSheets accepts the structure.
+4. **Data Upload**  
+   New parent jobcodes are inserted into TSheets, each linked to a corresponding TSheets location.  
+   Jobcodes automatically receive the site prefix (e.g., `LAX-`).
 
-5. **Review RM API**
-   Ensure we’re pulling the correct fields from RM and aligning them with TSheets structure.
-
-6. **Duplicate check logic**
-   Before posting new jobs to TSheets, verify they don't already exist (based on job name or number).
+5. **Automation**  
+   The sync runs on a scheduled task from a secure Windows server and logs all actions for review.
 
 ---
 
-## 🧪 Finalization Phase
+## 🧪 Validation & Testing
 
-Once all logic is validated:
+* Verified API calls and schema alignment through Postman and Python  
+* Confirmed jobcodes and locations display properly in the TSheets UI  
+* Ensured edits to existing jobcodes do **not** affect user timesheets  
+* Tested rate-limit handling (`HTTP 429`) and retry behavior  
+* Verified address and ZIP comparison logic for accurate location creation  
 
-* Develop full end-to-end script to:
+---
 
-  * Pull data from RM
-  * Compare with existing TSheets jobs
-  * Insert new jobs via the API
-* Transition from Postman to an authenticated Python process (OAuth token-based)
-* Deploy the script using Windows Task Scheduler for automation
-* Implement a **token refresh** mechanism (TSheets tokens expire every 3 months)
+## 🧱 Core Components
+
+| Component | Purpose |
+|------------|----------|
+| **SQL Server** | Stores jobcode and location data pulled from TSheets and RM |
+| **Python Automation Scripts** | Handles data extraction, comparison, and API calls |
+| **Windows Task Scheduler** | Automates the daily synchronization process |
+| **TSheets REST API** | Used for jobcode and location creation/update |
+
+---
+
+## 🧰 Tech Stack
+
+| Technology | Purpose |
+|-------------|----------|
+| **Python 3.11+** | Main automation and API handling |
+| **requests** | REST API communication |
+| **pyodbc** | SQL Server connectivity |
+| **Windows Task Scheduler** | Automation scheduling |
+| **SQL Server Management Studio (SSMS)** | Data validation and reporting |
+
+---
+
+## 🧠 Key Logic Summary
+
+* Pull all active jobcodes and locations from TSheets  
+* Compare against RM jobs using job name and number  
+* Identify new or changed jobs for posting  
+* Insert new parent jobcodes and link locations automatically  
+* Maintain consistent job structure and prevent duplicates  
+
+---
+
+## 🧾 Example Output (Console)
+```
+Jobcode BMS-25-00008M (ID 176896742) is linked to location 108246942
+TSheets -> addr1: 5720 Shoreline Cir W, city: Fort Worth, state: TX, zip: 76119
+SQL -> addr1: 5720 Shoreline Cir W, city: Fort Worth, state: TX, zip: 76119
+-> No address change for BMS-25-00008M, skipping.
+```
+---
+
+## 📦 Repository Contents
+
+| File | Description |
+|-------|--------------|
+| **tsheets_import.py** | Pulls job data from RM and pushes to TSheets |
+| **tsheets_export.py** | Exports existing TSheets jobcodes to SQL Server |
+| **tsheets_export_locations.py** | Retrieves and syncs TSheets locations |
+| **tsheets_add_lax.py** | Adds `LAX-` prefix to all jobcodes with parent IDs |
+| **tsheets_update.py** | Updates existing jobcodes and locations |
+| **tsheets_backup_import.py** | Backup import utility for job data recovery |
+| **testEmail.py** | Email test and notification script |
+
+---
+
+## 🏁 Project Completion Summary
+
+* ✅ Transitioned from CSV → Direct API Integration  
+* ✅ Implemented parent/child job creation and linking  
+* ✅ Location linking verified via TSheets API  
+* ✅ Rate-limit retry logic implemented and tested  
+* ✅ SQL structure finalized and optimized  
+* ✅ Production version live and running under scheduled automation  
 
 ---
 
 ## 💬 Notes
 
-This is an active work-in-progress. Now that the project has moved away from CSVs and toward a direct integration approach, future changes will focus on improving reliability and automation.
-
-Contributions, suggestions, and code reviews are welcome once the automated process is live and stable.
+This project represents a fully automated integration between RM and TSheets.  
+All future enhancements will focus on scalability, error monitoring, and token auto-refresh.  
+Developed and maintained by **Ruben Yanez – IT Automation Engineer, BMS CAT**.
